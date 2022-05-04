@@ -132,7 +132,8 @@ export enum WeaponType {
   Dagger = "Dagger",
   BOW = "Bow",
   TWO_HANDED = "Two Handed",
-  ONE_HANDED = "One Handed"
+  ONE_HANDED = "One Handed",
+  VANGUARD = "Vanguard"
 }
 
 export enum SwingType {

@@ -1,6 +1,6 @@
 {
   "name": "Glaive",
-  "weaponTypes": ["Polearm", "Axe", "Two Handed"],
+  "weaponTypes": ["Polearm", "Axe", "Two Handed", "Vanguard"],
   "damageType": "Chop",
   "attacks": {
     "horizontal": {
