@@ -302,7 +302,7 @@ Object.values(WeaponType).map(r => {
       ALL_WEAPONS
         .filter(x => Array.from(selectedWeaponTypes).every((y: WeaponType) => x.weaponTypes.includes(y)))
         .forEach(w => selectedWeapons.add(w))
-      
+
     }
     updateWeaponCheckboxes();
     redraw();
