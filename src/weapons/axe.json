@@ -4,7 +4,7 @@
     "Axe",
     "One Handed"
   ],
-  "damageType": "Chop"
+  "damageType": "Chop",
   "twoHanded": false,
   "attacks": {
     "horizontal": {
