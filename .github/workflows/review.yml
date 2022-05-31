@@ -21,7 +21,7 @@ jobs:
         run: |
           echo "::echo::on"
           set +e
-          $(npm bin)/eslint -f rdjson . --ext .ts,.json,.js > result.rdjson
-          cat result.rdjson
-          cat result.rdjson | reviewdog -f=rdjson -reporter=github-pr-review
+          $(npm bin)/eslint . -f stylish --ext .ts,.json,.js > out
+          cat out
+          cat out | reviewdog -f=eslint -reporter=github-pr-review
 
