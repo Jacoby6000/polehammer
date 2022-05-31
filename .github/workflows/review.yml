@@ -1,27 +1,13 @@
 name: Code Review
 on: [pull_request]
 jobs:
-  reviewdog:
-    name: reviewdog
+  tsc:
+    name: Review Dog
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v3
+      - uses: EPMatt/reviewdog-action-tsc@v1
         with:
-          node-version: 14
-      - name: Install node deps
-        run: npm install
-
-      - uses: reviewdog/action-setup@v1
-        with:
-          reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
-      - name: Run reviewdog
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "::echo::on"
-          set +e
-          $(npm bin)/tsc > out
-          cat out
-          cat out | reviewdog -f=tsc -reporter=github-pr-review
-
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-review
+          level: warning
