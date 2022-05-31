@@ -5,16 +5,15 @@ jobs:
     name: reviewdog
     runs-on: ubuntu-latest
     steps:
-      # ...
-      - uses: reviewdog/action-setup@v1
-        with:
-          reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
+      - uses: actions/checkout@v2
       - uses: actions/setup-node@v3
         with:
           node-version: 14
+      - uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
       - name: Run reviewdog
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm install
           $(npm bin)/eslint -f rdjson . --ext .ts,.json,.js | reviewdog -reporter=github-pr-review
