@@ -6,7 +6,6 @@
   ],
   "damageType": "Chop",
   "attacks": {
-    "oof"
     "horizontal": {
       "range": 21,
       "altRange": 21,
