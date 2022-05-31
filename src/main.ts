@@ -55,7 +55,7 @@ function chartData(
       return {
         label: w.name,
         data: [...categories].map((c) => {
-          const metric = dataset.get(w)!.get(c)!;
+          const metric = dataset.get(w).get(c);
           let value = metric.value;
           if (hasBonus(c)) {
             value *= bonusMult(selectedTarget, w.damageType);
@@ -63,8 +63,8 @@ function chartData(
 
           const maybeUnitStats = normalizationStats.get(metric.unit);
           if (maybeUnitStats) {
-            const unitMin = maybeUnitStats!.min;
-            const unitMax = maybeUnitStats!.max;
+            const unitMin = maybeUnitStats.min;
+            const unitMax = maybeUnitStats.max;
 
             // Normalize
             return (value - unitMin) / (unitMax - unitMin);
@@ -112,7 +112,7 @@ const bars = new Array<Chart>();
 
 function createBarChart(element: HTMLCanvasElement, category: MetricLabel) {
   const stats: UnitStats = new Map();
-  stats.set(Unit.SPEED, UNIT_STATS.get(Unit.SPEED)!);
+  stats.set(Unit.SPEED, UNIT_STATS.get(Unit.SPEED));
 
   return new Chart(element as HTMLCanvasElement, {
     type: "bar",
@@ -131,7 +131,7 @@ function createBarChart(element: HTMLCanvasElement, category: MetricLabel) {
 }
 
 function redrawBars() {
-  const barsElem = document.getElementById("bars")!;
+  const barsElem = document.getElementById("bars");
   bars.forEach((b) => b.destroy());
   while (barsElem.firstChild) {
     barsElem.removeChild(barsElem.firstChild);
@@ -202,7 +202,7 @@ function addWeapon(weapon: Weapon) {
 }
 
 function removeWeapon(weapon: Weapon) {
-  displayedWeapons.removeChild(document.getElementById(weapon.name)!);
+  displayedWeapons.removeChild(document.getElementById(weapon.name));
 
   selectedWeapons.delete(weapon);
   redraw();
@@ -316,13 +316,13 @@ function reset() {
 }
 
 // Link up to buttons
-document.getElementById("clear")!.onclick = clear;
-document.getElementById("random")!.onclick = random;
-document.getElementById("all")!.onclick = all;
-document.getElementById("reset")!.onclick = reset;
+document.getElementById("clear").onclick = clear;
+document.getElementById("random").onclick = random;
+document.getElementById("all").onclick = all;
+document.getElementById("reset").onclick = reset;
 
 // Link up Share button
-document.getElementById("share")!.onclick = () => {
+document.getElementById("share").onclick = () => {
   navigator.clipboard.writeText(window.location.toString());
   alert("Copied to clipboard!");
 };
