@@ -1,12 +1,19 @@
-name: reviewdog
+name: Code Review
 on: [pull_request]
 jobs:
-  eslint:
-    name: runner / eslint
+  reviewdog:
+    name: reviewdog
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: reviewdog/action-eslint@v1
+      # ...
+      - uses: reviewdog/action-setup@v1
         with:
-          reporter: github-pr-review # Change reporter.
-          eslint_flags: . --ext .ts,.json,.js
+          reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - name: Run reviewdog
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          eslint -f rdjson . --ext .ts,.json,.js | reviewdog -reporter=github-pr-review
