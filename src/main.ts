@@ -329,7 +329,7 @@ document.getElementById("share").onclick = () => {
 
 // Use query string to init values if possible
 const params = new URLSearchParams(location.search);
-if (params.get("target")!) {
+if (params.get("target")) {
   selectedTarget = params.get("target") as Target;
 }
 
