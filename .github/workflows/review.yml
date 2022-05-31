@@ -21,7 +21,7 @@ jobs:
         run: |
           echo "::echo::on"
           set +e
-          $(npm bin)/eslint . -f stylish --ext .ts,.json,.js > out
+          $(npm bin)/tsc > out
           cat out
-          cat out | reviewdog -f=eslint -reporter=github-pr-review
+          cat out | reviewdog -f=tsc -reporter=github-pr-review
 
