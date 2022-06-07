@@ -4,8 +4,7 @@ import { MetricLabel } from "./metrics";
 export function bonusMult(target: Target, type: DamageType): number {
   // Multiply Vanguard / Archer by 2 assuming equal distribution of target classes
   if (target === Target.AVERAGE) {
-    const sum =
-      2 * bonusMult(Target.VANGUARD_ARCHER, type) +
+    const sum = 2 * bonusMult(Target.VANGUARD_ARCHER, type) +
       bonusMult(Target.FOOTMAN, type) +
       bonusMult(Target.KNIGHT, type);
     return sum / 4;
