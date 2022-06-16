@@ -34,7 +34,9 @@ export enum MetricPath {
 export enum Unit {
   SPEED = "Attacks Per Second",
   RANGE = "Knockbacks",
-  DAMAGE = "Melee Hitpoints"
+  DAMAGE = "Melee Hitpoints",
+  THROWN_DAMAGE = "Thrown Hitpoints",
+  UNCATEGORIZED = "???"
 }
 
 export enum MetricLabel {
@@ -75,8 +77,27 @@ export enum MetricLabel {
   // SPEED_MAX = "Speed - Max",
 }
 
+export function labelGroup(label: MetricLabel): Unit {
+  if(label.startsWith("Thrown Damage")) 
+    return Unit.THROWN_DAMAGE;
+  
+  if(label.startsWith("Damage")) 
+    return Unit.DAMAGE;
+  
+  if(label.startsWith("Range")) 
+    return Unit.RANGE;
+
+  if(label.startsWith("Speed")) 
+    return Unit.RANGE;
+
+  return Unit.UNCATEGORIZED;
+}
+
 export function unitGroup(path: MetricPath) {
   if (path.includes(".damage")) {
+    if (path.startsWith("rangedAttack"))
+      return Unit.THROWN_DAMAGE;
+
     return Unit.DAMAGE;
   } else if (path.includes(".windup")) {
     return Unit.SPEED;

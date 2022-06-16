@@ -1,6 +1,6 @@
 import { Chart, ChartData, registerables } from "chart.js";
 import ALL_WEAPONS, { weaponByName } from "./all_weapons";
-import { MetricLabel, Unit } from "./metrics";
+import { labelGroup, MetricLabel, Unit } from "./metrics";
 import {
   generateMetrics,
   unitGroupStats,
@@ -9,8 +9,8 @@ import {
 } from "./stats";
 import "./style.scss";
 import { Target } from "./target";
-import { borderDash, weaponColor, weaponDash, metricColor } from "./ui";
-import { shuffle } from "./util";
+import { borderDash, weaponColor, weaponDash, metricColor, createRadarChart, chartData, createBarChart } from "./ui";
+import { filterSet, shuffle, subsets } from "./util";
 import { Weapon, WeaponType } from "./weapon";
 
 Chart.defaults.font.family = "'Lato', sans-serif";
@@ -20,10 +20,15 @@ let selectedTarget = Target.AVERAGE;
 let numberOfTargets = 1;
 let stats: WeaponStats = generateMetrics(ALL_WEAPONS, 1, Target.VANGUARD_ARCHER);
 let unitStats: UnitStats = unitGroupStats(stats);
+let absoluteRadarsEnabled = false;
+let selectedRadar = Unit.DAMAGE;
 
 const selectedWeapons: Set<Weapon> = new Set<Weapon>();
 const selectedCategories: Set<MetricLabel> = new Set<MetricLabel>();
 const searchResults: Set<Weapon> = new Set<Weapon>();
+
+const bigRadarDiv = document.querySelector<HTMLDivElement>("#bigRadar")!
+const smallRadarsDiv = document.querySelector<HTMLDivElement>("#smallRadars")!
 
 const weaponSearchResults = document.getElementById(
   "weaponSearchResults"
@@ -43,95 +48,15 @@ function toId(str: string) {
 // Normalization will only occur for stat types that have a unit present in the provided normalizationStats.
 // This allows for selective normalization, like for bar charts where we wan't mostly raw data, except for
 // "speed" (or other inverse metrics) which only make sense as a normalized value
-function chartData(
-  dataset: WeaponStats,
-  categories: Set<MetricLabel>,
-  normalizationStats: UnitStats,
-  setBgColor: boolean
-): ChartData {
-  let sortedCategories = Array.from(categories);
-  sortedCategories.sort((a,b) => {
-    return Object.values(MetricLabel).indexOf(a) - Object.values(MetricLabel).indexOf(b);
-  });
 
-  return {
-    labels: [...sortedCategories],
-    datasets: [...selectedWeapons].map((w) => {
-      return {
-        label: w.name,
-        data: [...sortedCategories].map((c) => {
-          const metric = dataset.get(w.name)!.get(c)!;
-          let value = metric.value;
-          const maybeUnitStats = normalizationStats.get(c);
-          if (maybeUnitStats) {
-            const unitMin = maybeUnitStats!.min;
-            const unitMax = maybeUnitStats!.max;
-
-            // Normalize
-            return (value - unitMin) / (unitMax - unitMin);
-          }
-          return value;
-        }),
-        backgroundColor: setBgColor ? weaponColor(w, 0.6) : weaponColor(w, 0.1),
-        borderColor: weaponColor(w, 0.6),
-        borderDash: borderDash(w),
-      };
-    }),
-  };
-}
-
-const radar: Chart = new Chart(
-  document.getElementById("radar") as HTMLCanvasElement,
-  {
-    type: "radar",
-    options: {
-      animation: false,
-      plugins: {
-        legend: {
-          display: false,
-          position: "bottom",
-        },
-      },
-      responsive: true,
-      maintainAspectRatio: true,
-      scales: {
-        radial: {
-          min: 0,
-          max: 1,
-          ticks: {
-            display: false,
-            maxTicksLimit: 2,
-          },
-        },
-      },
-    },
-    data: chartData(stats, selectedCategories, unitStats, false),
-  }
+const relativeRadar: Chart = createRadarChart(
+  document.querySelector<HTMLCanvasElement>("#relativeRadar")!,
+  chartData(stats, Array.from(selectedWeapons), selectedCategories, unitStats, false),
+  {min: 0, max: 1}
 );
 
 const bars = new Array<Chart>();
-
-function createBarChart(element: HTMLCanvasElement, category: MetricLabel) {
-  const barUnitStats: UnitStats = new Map();
-  if(category.includes("Speed")) {
-    barUnitStats.set(category, unitStats.get(category)!);
-  }
-
-  return new Chart(element as HTMLCanvasElement, {
-    type: "bar",
-    options: {
-      animation: false,
-      plugins: {
-        legend: {
-          display: false,
-        },
-      },
-      responsive: true,
-      maintainAspectRatio: false,
-    },
-    data: chartData(stats, new Set([category]), barUnitStats, true),
-  });
-}
+const absoluteRadars = new Array<Chart>();
 
 function redrawBars() {
   const barsElem = document.getElementById("bars")!;
@@ -149,11 +74,11 @@ function redrawBars() {
     const elem = document.createElement("canvas");
     outer.appendChild(elem);
     barsElem.appendChild(outer);
-    bars.push(createBarChart(elem, c));
+    bars.push(createBarChart(elem, Array.from(selectedWeapons), c, stats, unitStats));
   });
 }
 
-function redrawTable(dataset: WeaponStats, unitStats: UnitStats) {
+function redrawTable() {
   let sortedCategories = Array.from(selectedCategories);
   sortedCategories.sort((a,b) => {
     return Object.values(MetricLabel).indexOf(a) - Object.values(MetricLabel).indexOf(b);
@@ -198,7 +123,7 @@ function redrawTable(dataset: WeaponStats, unitStats: UnitStats) {
   table.appendChild(head);
 
   selectedWeapons.forEach(weapon => {
-    let weaponData = dataset.get(weapon.name)!;
+    let weaponData = stats.get(weapon.name)!;
 
     let row = document.createElement("tr");
 
@@ -235,11 +160,9 @@ function redraw() {
   stats = generateMetrics(ALL_WEAPONS, numberOfTargets, selectedTarget)
   unitStats = unitGroupStats(stats);
 
-  radar.data = chartData(stats, selectedCategories, unitStats, false);
-  radar.update();
-
   redrawBars();
-  redrawTable(stats, unitStats);
+  redrawTable();
+  redrawRadars();
 
   // Update content of location string so we can share
   const params = new URLSearchParams();
@@ -248,6 +171,55 @@ function redraw() {
   [...selectedWeapons].map((w) => params.append("weapon", w.name));
   [...selectedCategories].map((c) => params.append("category", c));
   window.history.replaceState(null, "", `?${params.toString()}`);
+}
+
+function redrawRadars() {
+  if(absoluteRadarsEnabled) {
+    absoluteRadarsButton.classList.add('active');
+    relativeRadarsButton.classList.remove('active');
+    relativeRadarsDiv.classList.add('d-none');
+    absoluteRadarsDiv.classList.remove('d-none');
+  } else {
+    relativeRadarsButton.classList.add('active');
+    absoluteRadarsButton.classList.remove('active');
+    absoluteRadarsDiv.classList.add('d-none');
+    relativeRadarsDiv.classList.remove('d-none');
+  }
+
+  relativeRadar.data = chartData(stats, Array.from(selectedWeapons), selectedCategories, unitStats, false);
+  relativeRadar.update();
+
+  let categoryGroups = subsets(selectedCategories, labelGroup)
+  let cateoryGroupsKeys = Array.from(categoryGroups.keys());
+  absoluteRadars.forEach(r => {
+    r.clear();
+    r.destroy();
+  });
+  absoluteRadars.splice(0, absoluteRadars.length);
+  if(!cateoryGroupsKeys.includes(selectedRadar)) {
+    selectedRadar = cateoryGroupsKeys[0];
+  }
+
+  bigRadarDiv.innerHTML = "";
+  smallRadarsDiv.innerHTML = "";
+
+  cateoryGroupsKeys.forEach(unit => {
+    let parent = unit === selectedRadar ? bigRadarDiv : smallRadarsDiv
+    let newCanvas = document.createElement("canvas");
+    parent.appendChild(newCanvas);  
+
+
+    absoluteRadars.push(
+      createRadarChart(
+        newCanvas,
+        chartData(stats, Array.from(selectedWeapons), categoryGroups.get(unit)!, new Map(), false),
+        {min: 0, max: 1}
+      )
+    );
+  });
+
+  absoluteRadars.forEach(r => r.draw());
+
 }
 
 function addWeaponDiv(weapon: Weapon) {
@@ -412,14 +384,29 @@ document.getElementById("random")!.onclick = random;
 document.getElementById("all")!.onclick = all;
 document.getElementById("reset")!.onclick = reset;
 
+let absoluteRadarsButton = document.querySelector<HTMLButtonElement>("#absoluteRadars")!,
+    relativeRadarsButton = document.querySelector<HTMLButtonElement>("#relativeRadars")!,
+    absoluteRadarsDiv = document.querySelector<HTMLButtonElement>("#absoluteRadarsDiv")!,
+    relativeRadarsDiv = document.querySelector<HTMLButtonElement>("#relativeRadarsDiv")!;
+
+absoluteRadarsButton.onclick = () => {
+  absoluteRadarsEnabled = true;
+  redrawRadars();
+}
+
+relativeRadarsButton.onclick = () => {
+  absoluteRadarsEnabled = false;
+  redrawRadars();
+}
+
 // Link up Share button
 document.getElementById("share")!.onclick = () => {
   navigator.clipboard.writeText(window.location.toString());
   alert("Copied to clipboard!");
 };
 
-let numberOfTargetsInput = document.querySelector<HTMLInputElement>("#numberOfTargets")!;
-let numberOfTargetsOutput = document.getElementById("numberOfTargetsOutput")!;
+let numberOfTargetsInput = document.querySelector<HTMLInputElement>("#numberOfTargets")!,
+    numberOfTargetsOutput = document.getElementById("numberOfTargetsOutput")!;
 
 numberOfTargetsInput.oninput = () => {
   numberOfTargetsOutput.innerHTML = numberOfTargetsInput.value

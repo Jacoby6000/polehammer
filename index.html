@@ -17,7 +17,7 @@
     <link rel="canonical" href="https://polehammer.net" />
   </head>
   <body>
-    <div class="container-flex main-content m-1">
+    <div class="container main-content">
       <div class="row p-1">
         <div class="col-md-3 col-lg-3 col-xl-2 p-1">
           <div class="border rounded p-2 mb-2">
@@ -175,11 +175,24 @@
           <div class="tab-content border rounded-bottom border-top-0" id="visualization-content">
             <div
               class="tab-pane fade show active"
+
+
               id="radar-content"
               role="tabpanel"
               aria-labelledby="radar-content-tab"
             >
-              <canvas id="radar"></canvas>
+              <div id="relativeRadarsDiv" class="d-none">
+                <canvas id="relativeRadar"></canvas>
+              </div>
+              <div id="absoluteRadarsDiv" class="row d-none">
+                <div class="col-9" id="bigRadar"></div>
+                <div class="col-3" id="smallRadars">
+                </div>
+              </div>
+              <div class="btn-group w-100 my-1" role="group">
+                <button id="absoluteRadars" class="btn btn-outline-primary">Absolute</button>
+                <button id="relativeRadars" class="btn btn-outline-primary">Relative</button>
+              </div>
             </div>
             <div
               class="tab-pane fade"

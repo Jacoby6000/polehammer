@@ -6,3 +6,27 @@ export function shuffle<T>(arr: T[]) {
   }
   return newArr;
 }
+
+export function filterSet<A>(set: Set<A>, f: (a: A) => boolean): Set<A> {
+  let results: Array<A> = [];
+  set.forEach(a => {
+    if(f(a))
+      results.push(a)
+  });
+  return new Set(results);
+}
+
+
+export function subsets<A, B>(set: Set<A>, f: (a: A) => B): Map<B, Set<A>> {
+  let results = new Map<B, Set<A>>();
+  set.forEach(a => {
+    let k = f(a);
+    let current = new Set<A>();
+    if(results.has(k)) {
+      current = results.get(k)!;
+    } 
+    current.add(a);
+    results.set(k, current);
+  });
+  return results
+}
