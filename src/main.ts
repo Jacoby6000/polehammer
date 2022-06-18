@@ -1,6 +1,6 @@
 import { Chart, ChartData, registerables } from "chart.js";
 import ALL_WEAPONS, { weaponByName } from "./all_weapons";
-import { MetricLabel, Unit } from "./metrics";
+import { MetricLabel } from "./metrics";
 import {
   generateMetrics,
   unitGroupStats,
@@ -18,7 +18,8 @@ Chart.register(...registerables); // the auto import stuff was making typescript
 
 let selectedTarget = Target.AVERAGE;
 let numberOfTargets = 1;
-let stats: WeaponStats = generateMetrics(ALL_WEAPONS, 1, Target.VANGUARD_ARCHER);
+let horsebackDamageMultiplier = 1.0;
+let stats: WeaponStats = generateMetrics(ALL_WEAPONS, 1, 1, Target.VANGUARD_ARCHER);
 let unitStats: UnitStats = unitGroupStats(stats);
 
 const selectedWeapons: Set<Weapon> = new Set<Weapon>();
@@ -61,7 +62,7 @@ function chartData(
         label: w.name,
         data: [...sortedCategories].map((c) => {
           const metric = dataset.get(w.name)!.get(c)!;
-          let value = metric.value;
+          let value = metric.value.result;
           const maybeUnitStats = normalizationStats.get(c);
           if (maybeUnitStats) {
             const unitMin = maybeUnitStats!.min;
@@ -211,18 +212,15 @@ function redrawTable(dataset: WeaponStats, unitStats: UnitStats) {
     sortedCategories.forEach(category => {
       let metric = weaponData.get(category)!;
 
-      let cellContent = metric.unit == Unit.SPEED ? 
-        (Math.round(metric.value*100)/100).toString() : 
-        Math.round(metric.value).toString(); // First cells should be the weapon name
+      let cellContent = Math.round(metric.value.rawResult).toString();
 
       let cell = document.createElement("td");
       cell.innerHTML = cellContent;
       cell.className = "border";
-      cell.style.backgroundColor = metricColor(metric.value, unitStats.get(category)!);
+      cell.style.backgroundColor = metricColor(metric.value.result, unitStats.get(category)!);
 
       row.appendChild(cell);
 
-      first = false;
     });
     table.appendChild(row);
   });
@@ -232,7 +230,7 @@ function redrawTable(dataset: WeaponStats, unitStats: UnitStats) {
 }
 
 function redraw() {
-  stats = generateMetrics(ALL_WEAPONS, numberOfTargets, selectedTarget)
+  stats = generateMetrics(ALL_WEAPONS, numberOfTargets, horsebackDamageMultiplier, selectedTarget)
   unitStats = unitGroupStats(stats);
 
   radar.data = chartData(stats, selectedCategories, unitStats, false);
@@ -424,6 +422,16 @@ let numberOfTargetsOutput = document.getElementById("numberOfTargetsOutput")!;
 numberOfTargetsInput.oninput = () => {
   numberOfTargetsOutput.innerHTML = numberOfTargetsInput.value
   numberOfTargets = Number.parseInt(numberOfTargetsInput.value)
+  redraw();
+}
+
+let horsebackDamageMultiplierInput = document.querySelector<HTMLInputElement>("#horsebackDamageMultiplier")!;
+let horsebackDamageMultiplierOutput = document.getElementById("horsebackDamageMultiplierOutput")!;
+
+horsebackDamageMultiplierInput.oninput = () => {
+  let rawInput = Number.parseInt(horsebackDamageMultiplierInput.value)
+  horsebackDamageMultiplierOutput.innerHTML = rawInput + "%";
+  horsebackDamageMultiplier = 1 + rawInput/100.0;
   redraw();
 }
 
