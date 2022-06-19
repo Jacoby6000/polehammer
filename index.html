@@ -185,17 +185,18 @@
               role="tabpanel"
               aria-labelledby="radar-content-tab"
             >
+              <div class="btn-group w-100 my-1" role="group">
+                <button id="absoluteRadars" class="btn btn-outline-primary">Absolute</button>
+                <button id="relativeRadars" class="btn btn-outline-primary">Relative</button>
+              </div>
               <div id="relativeRadarsDiv" class="d-none">
                 <canvas id="relativeRadar"></canvas>
               </div>
               <div id="absoluteRadarsDiv" class="row d-none">
-                <div class="col-9" id="bigRadar"></div>
-                <div class="col-3" id="smallRadars">
+
+                <div class="col-md-8 col-xs-7" id="bigRadar"></div>
+                <div class="col-md-4 col-xs-7" id="smallRadars">
                 </div>
-              </div>
-              <div class="btn-group w-100 my-1" role="group">
-                <button id="absoluteRadars" class="btn btn-outline-primary">Absolute</button>
-                <button id="relativeRadars" class="btn btn-outline-primary">Relative</button>
               </div>
             </div>
             <div

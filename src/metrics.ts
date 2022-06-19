@@ -75,14 +75,14 @@ export enum MetricLabel {
 }
 
 export function labelGroup(label: MetricLabel): Unit {
-  if(label.startsWith("Damage")) 
+  if(label.startsWith("Damage") || label.startsWith("Thrown Damage")) 
     return Unit.DAMAGE;
   
   if(label.startsWith("Range")) 
     return Unit.RANGE;
 
   if(label.startsWith("Speed")) 
-    return Unit.RANGE;
+    return Unit.SPEED;
 
   return Unit.UNCATEGORIZED;
 }
@@ -186,7 +186,7 @@ export class InverseMetric extends Metric {
   calculate(weapon: Weapon): MetricResult {
     let rawResult = extractNumber(weapon, this.path);
     return {
-      result: 1/rawResult,
+      result: (1 / rawResult) * 1000,
       rawResult: rawResult
     }
   }
@@ -212,7 +212,7 @@ export class AggregateInverseMetric extends Metric {
     );
 
     return {
-      result: 1 / rawResult,
+      result: (1 / rawResult) * 1000,
       rawResult: rawResult,
     }
   }

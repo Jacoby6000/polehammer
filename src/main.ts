@@ -52,7 +52,7 @@ function toId(str: string) {
 
 const relativeRadar: Chart = createRadarChart(
   document.querySelector<HTMLCanvasElement>("#relativeRadar")!,
-  chartData(stats, Array.from(selectedWeapons), selectedCategories, unitStats, false),
+  chartData(stats, Array.from(selectedWeapons), selectedCategories, unitStats, false, null),
   {min: 0, max: 1}
 )
 
@@ -182,7 +182,7 @@ function redrawRadars() {
     relativeRadarsDiv.classList.remove('d-none');
   }
 
-  relativeRadar.data = chartData(stats, Array.from(selectedWeapons), selectedCategories, unitStats, false);
+  relativeRadar.data = chartData(stats, Array.from(selectedWeapons), selectedCategories, unitStats, false, null);
   relativeRadar.update();
 
   let categoryGroups = subsets(selectedCategories, labelGroup)
@@ -201,17 +201,38 @@ function redrawRadars() {
 
   cateoryGroupsKeys.forEach(unit => {
     let parent = unit === selectedRadar ? bigRadarDiv : smallRadarsDiv
-    let newCanvas = document.createElement("canvas");
-    parent.appendChild(newCanvas);  
 
+    let label = 
+      unit === Unit.SPEED ? "Speed*" :
+        unit === Unit.DAMAGE ? "Damage" :
+          unit === Unit.RANGE ? "Range" :
+          "Unknown"
 
-    absoluteRadars.push(
-      createRadarChart(
-        newCanvas,
-        chartData(stats, Array.from(selectedWeapons), categoryGroups.get(unit)!, new Map(), false),
-        {min: 0, max: 1}
-      )
-    );
+    let newLabel  = document.createElement("div");
+    newLabel.classList.add("category-group");
+    newLabel.classList.add("text-center");
+    newLabel.innerHTML = label;
+    parent.append(newLabel);
+
+    if(categoryGroups.get(unit)!.size < 3) {
+      let newMessage = document.createElement("div");
+      newMessage.innerHTML = "Select 3 or more categories of this type for this chart to display.";
+      newMessage.classList.add("text-center");
+      newMessage.classList.add("my-5");
+      parent.append(newMessage);
+    } else {
+      let newCanvas = document.createElement("canvas");
+      newCanvas.onclick = () => { selectedRadar = unit; redrawRadars(); }
+      parent.appendChild(newCanvas);  
+
+      absoluteRadars.push(
+        createRadarChart(
+          newCanvas,
+          chartData(stats, Array.from(selectedWeapons), categoryGroups.get(unit)!, new Map(), false, x => x.split(' - ')[1]),
+          { min: 0, max: unitStats.get(unit)!.max }
+        )
+      );
+    }
   });
 
   absoluteRadars.forEach(r => r.draw());

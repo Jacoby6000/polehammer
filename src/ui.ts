@@ -73,7 +73,7 @@ export function createBarChart(element: HTMLCanvasElement, weapons: Array<Weapon
       responsive: true,
       maintainAspectRatio: false,
     },
-    data: chartData(stats, weapons, new Set([category]), barUnitStats, true),
+    data: chartData(stats, weapons, new Set([category]), barUnitStats, true, null),
   });
 }
 
@@ -81,6 +81,11 @@ export function createRadarChart(canvasElem: HTMLCanvasElement, data: ChartData,
   return new Chart(canvasElem, {
     type: "radar",
     options: {
+      elements: {
+        line: {
+          tension: 0,
+        }
+      },
       animation: false,
       plugins: {
         legend: {
@@ -110,15 +115,17 @@ export function chartData(
   weapons: Array<Weapon>,
   categories: Set<MetricLabel>,
   normalizationStats: UnitStats,
-  setBgColor: boolean
+  setBgColor: boolean,
+  labelTransform: ((m:MetricLabel) => string)|null
 ): ChartData {
   let sortedCategories = Array.from(categories);
+  let allLabels = Object.values(MetricLabel)
   sortedCategories.sort((a,b) => {
-    return Object.values(MetricLabel).indexOf(a) - Object.values(MetricLabel).indexOf(b);
+    return allLabels.indexOf(a) - allLabels.indexOf(b);
   });
 
   return {
-    labels: [...sortedCategories],
+    labels: labelTransform ? [...sortedCategories.map(labelTransform)] : [...sortedCategories],
     datasets: [...weapons].map((w) => {
       return {
         label: w.name,
