@@ -9,7 +9,7 @@ import {
 } from "./stats";
 import "./style.scss";
 import { Target } from "./target";
-import { weaponColor, weaponDash, metricColor, createRadarChart, chartData, createBarChart } from "./ui";
+import { weaponColor, weaponDash, metricColor, createRadarChart, chartData, createBarChart, getViewport } from "./ui";
 import { shuffle, subsets } from "./util";
 import { Weapon, WeaponType } from "./weapon";
 
@@ -221,9 +221,17 @@ function redrawRadars() {
       newMessage.classList.add("my-5");
       parent.append(newMessage);
     } else {
+      let newCanvasDiv = document.createElement("div");
+      newCanvasDiv.classList.add("col-xs-6")
+      newCanvasDiv.classList.add("col-md-12")
       let newCanvas = document.createElement("canvas");
-      newCanvas.onclick = () => { selectedRadar = unit; redrawRadars(); }
-      parent.appendChild(newCanvas);  
+      
+      let viewport = getViewport();
+      if(["xl", "lg", "md"].includes(viewport)) {
+        newCanvas.onclick = () => { selectedRadar = unit; redrawRadars(); }
+      }
+      newCanvasDiv.appendChild(newCanvas);
+      parent.appendChild(newCanvasDiv);  
 
       absoluteRadars.push(
         createRadarChart(

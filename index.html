@@ -19,7 +19,7 @@
   <body>
     <div class="container main-content">
       <div class="row p-1">
-        <div class="col-md-3 col-lg-3 col-xl-2 p-1">
+        <div class="col-md-3 col-xl-2 p-1">
           <div class="border rounded p-2 mb-2">
             <fieldset id="target">
               <legend>Target</legend>
@@ -186,17 +186,16 @@
               aria-labelledby="radar-content-tab"
             >
               <div class="btn-group w-100 my-1" role="group">
-                <button id="absoluteRadars" class="btn btn-outline-primary">Absolute</button>
                 <button id="relativeRadars" class="btn btn-outline-primary">Relative</button>
+                <button id="absoluteRadars" class="btn btn-outline-primary">Absolute</button>
               </div>
               <div id="relativeRadarsDiv" class="d-none">
                 <canvas id="relativeRadar"></canvas>
               </div>
               <div id="absoluteRadarsDiv" class="row d-none">
 
-                <div class="col-md-8 col-xs-7" id="bigRadar"></div>
-                <div class="col-md-4 col-xs-7" id="smallRadars">
-                </div>
+                <div class="col-md-8 col-sm-12" id="bigRadar"></div>
+                <div class="col-md-4 col-sm-12" id="smallRadars"></div>
               </div>
             </div>
             <div
