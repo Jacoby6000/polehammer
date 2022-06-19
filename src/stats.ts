@@ -14,21 +14,21 @@ import { withBonusMultipliers, Weapon } from "./weapon";
 
 export type WeaponStats = Map<string, LabelledMetrics>;
 
-export type UnitStats = Map<MetricLabel, { min: number; max: number }>;
+export type UnitStats = Map<string, { min: number; max: number }>;
 
 function average(lst: number[]) {
   if (lst.length > 0) return lst.reduce((a, b) => a + b) / lst.length;
   else return 0;
 }
 
-export function generateMetrics(inputWeapons: Weapon[], numberOfTargets: number, target: Target): WeaponStats {
-  const weapons = inputWeapons.map(w => withBonusMultipliers(w, numberOfTargets, target))
+export function generateMetrics(inputWeapons: Weapon[], numberOfTargets: number, horsebackDamageMult: number, target: Target): WeaponStats {
+  const weapons = inputWeapons.map(w => withBonusMultipliers(w, numberOfTargets, horsebackDamageMult, target))
   const metricGenerators = [
     // Speeds
     // Note that we invert each value within its range, because lower is better.
     new InverseMetric(
-      MetricLabel.SPEED_HORIZONTAL,
-      MetricPath.WINDUP_HORIZONTAL
+      MetricLabel.SPEED_SLASH,
+      MetricPath.WINDUP_SLASH
     ),
     new InverseMetric(MetricLabel.SPEED_OVERHEAD, MetricPath.WINDUP_OVERHEAD),
     new InverseMetric(MetricLabel.SPEED_STAB, MetricPath.WINDUP_STAB),
@@ -40,10 +40,10 @@ export function generateMetrics(inputWeapons: Weapon[], numberOfTargets: number,
     ),
 
     // Ranges
-    new BasicMetric(MetricLabel.RANGE_HORIZONTAL, MetricPath.RANGE_HORIZONTAL),
+    new BasicMetric(MetricLabel.RANGE_SLASH, MetricPath.RANGE_SLASH),
     new BasicMetric(
-      MetricLabel.RANGE_ALT_HORIZONTAL,
-      MetricPath.RANGE_ALT_HORIZONTAL
+      MetricLabel.RANGE_ALT_SLASH,
+      MetricPath.RANGE_ALT_SLASH
     ),
     new BasicMetric(MetricLabel.RANGE_OVERHEAD, MetricPath.RANGE_OVERHEAD),
     new BasicMetric(
@@ -57,12 +57,12 @@ export function generateMetrics(inputWeapons: Weapon[], numberOfTargets: number,
 
     // Damages
     new BasicMetric(
-      MetricLabel.DAMAGE_HORIZONTAL_LIGHT,
-      MetricPath.DAMAGE_HORIZONTAL_LIGHT
+      MetricLabel.DAMAGE_SLASH_LIGHT,
+      MetricPath.DAMAGE_SLASH_LIGHT
     ),
     new BasicMetric(
-      MetricLabel.DAMAGE_HORIZONTAL_HEAVY,
-      MetricPath.DAMAGE_HORIZONTAL_HEAVY
+      MetricLabel.DAMAGE_SLASH_HEAVY,
+      MetricPath.DAMAGE_SLASH_HEAVY
     ),
     new BasicMetric(
       MetricLabel.DAMAGE_OVERHEAD_LIGHT,
@@ -85,12 +85,12 @@ export function generateMetrics(inputWeapons: Weapon[], numberOfTargets: number,
     new BasicMetric(MetricLabel.DAMAGE_LEAP, MetricPath.DAMAGE_LEAP),
     new AggregateMetric(
       MetricLabel.DAMAGE_LIGHT_AVERAGE, 
-      [MetricPath.DAMAGE_STAB_LIGHT, MetricPath.DAMAGE_OVERHEAD_LIGHT, MetricPath.DAMAGE_HORIZONTAL_LIGHT], 
+      [MetricPath.DAMAGE_STAB_LIGHT, MetricPath.DAMAGE_OVERHEAD_LIGHT, MetricPath.DAMAGE_SLASH_LIGHT], 
       average
     ),
     new AggregateMetric(
       MetricLabel.DAMAGE_HEAVY_AVERAGE, 
-      [MetricPath.DAMAGE_STAB_HEAVY, MetricPath.DAMAGE_OVERHEAD_HEAVY, MetricPath.DAMAGE_HORIZONTAL_HEAVY], 
+      [MetricPath.DAMAGE_STAB_HEAVY, MetricPath.DAMAGE_OVERHEAD_HEAVY, MetricPath.DAMAGE_SLASH_HEAVY], 
       average
     ),
     
@@ -123,22 +123,36 @@ export function generateMetrics(inputWeapons: Weapon[], numberOfTargets: number,
 // Across given weapon stats, calculate min and max (at max possible bonus)
 // values for use in normalizing results for chart display
 export function unitGroupStats(weaponStats: WeaponStats) {
-  const unitGroupStats = new Map<MetricLabel, { min: number; max: number }>();
+  const unitGroupStats = new Map<string, { min: number; max: number }>();
 
   // Across each weapon
   for (const [_, stats] of weaponStats) {
-    // Across each stat
+    // Across each category and unit type
     for (const [l, metric] of stats) {
-      const existing = unitGroupStats.get(l);
-      if (existing === undefined) {
+      const existingCategory = unitGroupStats.get(l);
+      const existingUnit  = unitGroupStats.get(metric.unit);
+
+      if (existingCategory === undefined) {
         unitGroupStats.set(l, {
-          min: metric.value,
-          max: metric.value,
+          min: metric.value.result,
+          max: metric.value.result,
         });
       } else {
         unitGroupStats.set(l, {
-          min: Math.min(existing.min, metric.value),
-          max: Math.max(existing.max, metric.value),
+          min: Math.min(existingCategory.min, metric.value.result),
+          max: Math.max(existingCategory.max, metric.value.result),
+        });
+      }
+      
+      if (existingUnit === undefined) {
+        unitGroupStats.set(metric.unit, {
+          min: metric.value.result,
+          max: metric.value.result,
+        });
+      } else {
+        unitGroupStats.set(metric.unit, {
+          min: Math.min(existingUnit.min, metric.value.result),
+          max: Math.max(existingUnit.max, metric.value.result),
         });
       }
     }

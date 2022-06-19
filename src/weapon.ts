@@ -11,21 +11,21 @@ function canCleave(w: Weapon, path: string): boolean {
   return false;
 }
 
-export function withBonusMultipliers(w: Weapon, numberOfTargets: number, target: Target): Weapon {
+export function withBonusMultipliers(w: Weapon, numberOfTargets: number, horsebackDamageMult: number, target: Target): Weapon {
   return {
     "name": w.name,
     "weaponTypes": w.weaponTypes,
     "damageType": w.damageType,
     "attacks": {
-      "horizontal": {
-        "range": w.attacks.horizontal.range,
-        "altRange": w.attacks.horizontal.altRange,
+      "slash": {
+        "range": w.attacks.slash.range,
+        "altRange": w.attacks.slash.altRange,
         "light": {
-          "windup": w.attacks.horizontal.light.windup,
-          "damage": w.attacks.horizontal.light.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.horizontal.light.damage"))
+          "windup": w.attacks.slash.light.windup,
+          "damage": w.attacks.slash.light.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.slash.light.damage")) * horsebackDamageMult
         },
         "heavy": {
-          "damage": w.attacks.horizontal.heavy.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.horizontal.heavy.damage"))
+          "damage": w.attacks.slash.heavy.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.slash.heavy.damage")) * horsebackDamageMult
         }
       },
       "overhead": {
@@ -33,10 +33,10 @@ export function withBonusMultipliers(w: Weapon, numberOfTargets: number, target:
         "altRange": w.attacks.overhead.altRange,
         "light": {
           "windup": w.attacks.overhead.light.windup,
-          "damage": w.attacks.overhead.light.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.overhead.light.damage"))
+          "damage": w.attacks.overhead.light.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.overhead.light.damage")) * horsebackDamageMult
         },
         "heavy": {
-          "damage": w.attacks.overhead.heavy.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.overhead.heavy.damage"))
+          "damage": w.attacks.overhead.heavy.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.overhead.heavy.damage")) * horsebackDamageMult
         }
       },
       "stab": {
@@ -44,10 +44,10 @@ export function withBonusMultipliers(w: Weapon, numberOfTargets: number, target:
         "altRange": w.attacks.stab.altRange,
         "light": {
           "windup": w.attacks.stab.light.windup,
-          "damage": w.attacks.stab.light.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.stab.light.damage"))
+          "damage": w.attacks.stab.light.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.stab.light.damage")) * horsebackDamageMult
         },
         "heavy": {
-          "damage": w.attacks.stab.heavy.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.stab.heavy.damage"))
+          "damage": w.attacks.stab.heavy.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "attacks.stab.heavy.damage")) * horsebackDamageMult
         }
       }
     },
@@ -60,7 +60,7 @@ export function withBonusMultipliers(w: Weapon, numberOfTargets: number, target:
     },
     "specialAttack": {
       "windup": w.specialAttack.windup,
-      "damage": w.specialAttack.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "specialAttack.damage"))
+      "damage": w.specialAttack.damage * bonusMult(numberOfTargets, target, w.damageType, canCleave(w, "specialAttack.damage")) * horsebackDamageMult
     },
     "leapAttack": {
       "windup": w.leapAttack.windup,
@@ -198,7 +198,7 @@ export enum WeaponType {
 }
 
 export enum SwingType {
-  HORIZONTAL = "horizontal",
+  SLASH = "slash",
   OVERHEAD = "overhead",
   STAB = "stab",
 }

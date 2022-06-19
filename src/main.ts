@@ -1,4 +1,4 @@
-import { Chart, ChartData, registerables } from "chart.js";
+import { Chart, registerables } from "chart.js";
 import ALL_WEAPONS, { weaponByName } from "./all_weapons";
 import { labelGroup, MetricLabel, Unit } from "./metrics";
 import {
@@ -9,8 +9,8 @@ import {
 } from "./stats";
 import "./style.scss";
 import { Target } from "./target";
-import { borderDash, weaponColor, weaponDash, metricColor, createRadarChart, chartData, createBarChart } from "./ui";
-import { filterSet, shuffle, subsets } from "./util";
+import { weaponColor, weaponDash, metricColor, createRadarChart, chartData, createBarChart } from "./ui";
+import { shuffle, subsets } from "./util";
 import { Weapon, WeaponType } from "./weapon";
 
 Chart.defaults.font.family = "'Lato', sans-serif";
@@ -18,7 +18,8 @@ Chart.register(...registerables); // the auto import stuff was making typescript
 
 let selectedTarget = Target.AVERAGE;
 let numberOfTargets = 1;
-let stats: WeaponStats = generateMetrics(ALL_WEAPONS, 1, Target.VANGUARD_ARCHER);
+let horsebackDamageMultiplier = 1.0;
+let stats: WeaponStats = generateMetrics(ALL_WEAPONS, 1, 1, Target.VANGUARD_ARCHER);
 let unitStats: UnitStats = unitGroupStats(stats);
 let absoluteRadarsEnabled = false;
 let selectedRadar = Unit.DAMAGE;
@@ -53,7 +54,7 @@ const relativeRadar: Chart = createRadarChart(
   document.querySelector<HTMLCanvasElement>("#relativeRadar")!,
   chartData(stats, Array.from(selectedWeapons), selectedCategories, unitStats, false),
   {min: 0, max: 1}
-);
+)
 
 const bars = new Array<Chart>();
 const absoluteRadars = new Array<Chart>();
@@ -135,19 +136,14 @@ function redrawTable() {
 
     sortedCategories.forEach(category => {
       let metric = weaponData.get(category)!;
-
-      let cellContent = metric.unit == Unit.SPEED ? 
-        (Math.round(metric.value*100)/100).toString() : 
-        Math.round(metric.value).toString(); // First cells should be the weapon name
-
+      let cellContent = Math.round(metric.value.rawResult).toString();
       let cell = document.createElement("td");
+
       cell.innerHTML = cellContent;
       cell.className = "border";
-      cell.style.backgroundColor = metricColor(metric.value, unitStats.get(category)!);
+      cell.style.backgroundColor = metricColor(metric.value.result, unitStats.get(category)!);
 
       row.appendChild(cell);
-
-      first = false;
     });
     table.appendChild(row);
   });
@@ -157,7 +153,7 @@ function redrawTable() {
 }
 
 function redraw() {
-  stats = generateMetrics(ALL_WEAPONS, numberOfTargets, selectedTarget)
+  stats = generateMetrics(ALL_WEAPONS, numberOfTargets, horsebackDamageMultiplier, selectedTarget)
   unitStats = unitGroupStats(stats);
 
   redrawBars();
@@ -414,6 +410,16 @@ numberOfTargetsInput.oninput = () => {
   redraw();
 }
 
+let horsebackDamageMultiplierInput = document.querySelector<HTMLInputElement>("#horsebackDamageMultiplier")!;
+let horsebackDamageMultiplierOutput = document.getElementById("horsebackDamageMultiplierOutput")!;
+
+horsebackDamageMultiplierInput.oninput = () => {
+  let rawInput = Number.parseInt(horsebackDamageMultiplierInput.value)
+  horsebackDamageMultiplierOutput.innerHTML = rawInput + "%";
+  horsebackDamageMultiplier = 1 + rawInput/100.0;
+  redraw();
+}
+
 let presetsSelect = document.querySelector<HTMLSelectElement>("#presetsSelect")!;
 
 Object.values(WeaponType).forEach(wt => {
@@ -450,12 +456,19 @@ if (params.getAll("weapon").length) {
 }
 
 if (params.getAll("category").length) {
-  params.getAll("category").map((c) => setCategory(c as MetricLabel, true));
+  // Backwards Compat
+  let compatCategories = params.getAll("category").map((c) => {
+    let result = c.replaceAll("Horizontal", "Slash")
+    if(result.includes("Speed"))
+       result = result.replaceAll(" (Light)", "")
+    return result
+  });
+
+  compatCategories.forEach(c => setCategory(c as MetricLabel, true))
 
   // Setting them failed, so just default
-  if (!selectedCategories.size) {
+  if (!selectedCategories.size)
     reset();
-  }
 } else {
   reset();
 }

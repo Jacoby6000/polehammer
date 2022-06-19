@@ -124,7 +124,7 @@ export function chartData(
         label: w.name,
         data: [...sortedCategories].map((c) => {
           const metric = dataset.get(w.name)!.get(c)!;
-          let value = metric.value;
+          let value = metric.value.result;
           const maybeUnitStats = normalizationStats.get(c);
           if (maybeUnitStats) {
             const unitMin = maybeUnitStats!.min;
