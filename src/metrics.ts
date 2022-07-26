@@ -32,6 +32,7 @@ export enum MetricPath {
 // Metric Groups share the same units (damage/hitpoints, milliseconds, etc.)
 // and are used to determine consistent min/max scales for normalization across categories
 export enum Unit {
+  INDEX = "Index",
   SPEED = "Milliseconds",
   RANGE = "Jeoffreys",
   DAMAGE = "Hitpoints",
@@ -72,6 +73,8 @@ export enum MetricLabel {
   SPEED_OVERHEAD = "Speed - Overhead",
   SPEED_STAB = "Speed - Stab",
   SPEED_SPECIAL = "Speed - Special",
+  // SPEED_MAX = "Speed - Max",
+  POLEHAMMER_INDEX = "Index - Polehammer"
 }
 
 export function labelGroup(label: MetricLabel): Unit {
@@ -135,13 +138,16 @@ export abstract class Metric {
 export class AggregateMetric extends Metric {
   paths: MetricPath[];
   aggregateFunction: (nums: number[]) => number;
-
+  
   constructor(
     name: MetricLabel,
     paths: MetricPath[],
-    aggregateFunc: (nums: number[]) => number
+    aggregateFunc: (nums: number[]) => number,
+    unit: Unit|null = null
   ) {
-    super(name, unitGroup(paths[0]));
+    if(unit == null)
+      unit = unitGroup(paths[0]);
+    super(name, unit);
     this.paths = paths;
     this.aggregateFunction = aggregateFunc;
   }
