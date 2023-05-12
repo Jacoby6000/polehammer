@@ -1,4 +1,7 @@
+import { Chart, ChartData } from "chart.js";
 import ALL_WEAPONS from "./all_weapons";
+import { MetricLabel } from "./metrics";
+import { UnitStats, WeaponStats } from "./stats";
 import { Weapon } from "./weapon";
 
 const SATURATION = "85%";
@@ -50,4 +53,112 @@ export function borderDash(weapon: Weapon) {
     case "dotted":
       return [2, 2];
   }
+}
+
+export function createBarChart(element: HTMLCanvasElement, weapons: Array<Weapon>, category: MetricLabel, stats: WeaponStats, unitStats: UnitStats) {
+  const barUnitStats: UnitStats = new Map();
+  if(category.includes("Speed")) {
+    barUnitStats.set(category, unitStats.get(category)!);
+  }
+
+  return new Chart(element as HTMLCanvasElement, {
+    type: "bar",
+    options: {
+      animation: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+    },
+    data: chartData(stats, weapons, new Set([category]), barUnitStats, true, null),
+  });
+}
+
+export function createRadarChart(canvasElem: HTMLCanvasElement, data: ChartData, range: {min: number; max: number}|undefined = undefined): Chart {
+  return new Chart(canvasElem, {
+    type: "radar",
+    options: {
+      elements: {
+        line: {
+          tension: 0,
+        }
+      },
+      animation: false,
+      plugins: {
+        legend: {
+          display: false,
+          position: "bottom",
+        },
+      },
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        radial: {
+          min: range ? range.max : undefined,
+          max: range ? range.min : undefined,
+          ticks: {
+            display: false,
+            maxTicksLimit: 2,
+          },
+        },
+      },
+    },
+    data: data
+  });
+}
+
+export function chartData(
+  dataset: WeaponStats,
+  weapons: Array<Weapon>,
+  categories: Set<MetricLabel>,
+  normalizationStats: UnitStats,
+  setBgColor: boolean,
+  labelTransform: ((m:MetricLabel) => string)|null
+): ChartData {
+  let sortedCategories = Array.from(categories);
+  let allLabels = Object.values(MetricLabel)
+  sortedCategories.sort((a,b) => {
+    return allLabels.indexOf(a) - allLabels.indexOf(b);
+  });
+
+  return {
+    labels: labelTransform ? [...sortedCategories.map(labelTransform)] : [...sortedCategories],
+    datasets: [...weapons].map((w) => {
+      return {
+        label: w.name,
+        data: [...sortedCategories].map((c) => {
+          const metric = dataset.get(w.name)!.get(c)!;
+          let value = metric.value.result;
+          const maybeUnitStats = normalizationStats.get(c);
+          if (maybeUnitStats) {
+            const unitMin = maybeUnitStats!.min;
+            const unitMax = maybeUnitStats!.max;
+
+            // Normalize
+            return (value - unitMin) / (unitMax - unitMin);
+          }
+          return value;
+        }),
+        backgroundColor: setBgColor ? weaponColor(w, 0.6) : weaponColor(w, 0.1),
+        borderColor: weaponColor(w, 0.6),
+        borderDash: borderDash(w),
+      };
+    }),
+  };
+}
+
+export function getViewport(): string {
+  // https://stackoverflow.com/a/8876069
+  const width = Math.max(
+    document.documentElement.clientWidth,
+    window.innerWidth || 0
+  )
+  if (width <= 576) return 'xs'
+  if (width <= 768) return 'sm'
+  if (width <= 992) return 'md'
+  if (width <= 1200) return 'lg'
+  return 'xl'
 }

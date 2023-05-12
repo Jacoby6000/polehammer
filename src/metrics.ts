@@ -35,7 +35,8 @@ export enum Unit {
   INDEX = "Index",
   SPEED = "Milliseconds",
   RANGE = "Jeoffreys",
-  DAMAGE = "Hitpoints"
+  DAMAGE = "Hitpoints",
+  UNCATEGORIZED = "???"
 }
 
 export enum MetricLabel {
@@ -76,6 +77,19 @@ export enum MetricLabel {
   POLEHAMMER_INDEX = "Index - Polehammer"
 }
 
+export function labelGroup(label: MetricLabel): Unit {
+  if(label.startsWith("Damage") || label.startsWith("Thrown Damage")) 
+    return Unit.DAMAGE;
+  
+  if(label.startsWith("Range")) 
+    return Unit.RANGE;
+
+  if(label.startsWith("Speed")) 
+    return Unit.SPEED;
+
+  return Unit.UNCATEGORIZED;
+}
+
 export function unitGroup(path: MetricPath) {
   if (path.includes(".damage")) {
     return Unit.DAMAGE;
@@ -84,7 +98,7 @@ export function unitGroup(path: MetricPath) {
   } else if (path.includes(".range") || path.includes(".altRange")) {
     return Unit.RANGE;
   }
-  throw `Invalid path: ${path}`;
+  return Unit.UNCATEGORIZED
 }
 
 export const DAMAGE_METRICS = Object.values(MetricPath).filter(
@@ -178,7 +192,7 @@ export class InverseMetric extends Metric {
   calculate(weapon: Weapon): MetricResult {
     let rawResult = extractNumber(weapon, this.path);
     return {
-      result: 1/rawResult,
+      result: (1 / rawResult) * 1000,
       rawResult: rawResult
     }
   }
@@ -204,7 +218,7 @@ export class AggregateInverseMetric extends Metric {
     );
 
     return {
-      result: 1 / rawResult,
+      result: (1 / rawResult) * 1000,
       rawResult: rawResult,
     }
   }
