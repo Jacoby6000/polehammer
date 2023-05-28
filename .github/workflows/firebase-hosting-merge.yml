@@ -17,14 +17,14 @@ jobs:
         id: extract_branch
       - name: Set channel id
         shell: bash
-        run: >
-          CHANNEL_ID=${{ steps.extract_branch.outputs.branch }}
+        run: |
+          CHANNEL_ID=${{ steps.extract_branch.outputs.branch }};
           if [[ $CHANNEL_ID -eq "legacy" ]]; then
             CHANNEL_ID=live;
           else
             CHANNEL_ID=legacy
           fi;
-          echo "channel_id=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+          echo "channel_id=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT;
         id: set_channel_id
       - uses: actions/checkout@v2
       - run: npm ci && npm run build
