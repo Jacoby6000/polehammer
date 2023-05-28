@@ -6,15 +6,31 @@ name: Deploy to Firebase Hosting on merge
   push:
     branches:
       - firebase
+      - legacy
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+      - name: Set channel id
+        shell: bash
+        run: >
+          CHANNEL_ID=${{ steps.extract_branch.outputs.branch }}
+          if [[ $CHANNEL_ID -eq "legacy" ]]; then
+            CHANNEL_ID=live;
+          else
+            CHANNEL_ID=legacy
+          fi;
+          echo "channel_id=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: set_channel_id
       - uses: actions/checkout@v2
       - run: npm ci && npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_POLEHAMMER_A740E }}'
-          channelId: live
+          channelId: ${{ steps.set_channel_id.outputs.channel_id }}
           projectId: polehammer-a740e
